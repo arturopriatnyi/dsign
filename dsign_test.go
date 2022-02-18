@@ -27,6 +27,12 @@ var (
 		33, 253, 3, 86, 126, 4, 130, 247, 84, 118,
 		21, 184, 141, 199,
 	}
+	testPublicKey = PublicKey{
+		214, 218, 41, 143, 49, 88, 77, 203, 255, 20,
+		45, 70, 126, 18, 67, 110, 35, 196, 33, 253,
+		3, 86, 126, 4, 130, 247, 84, 118, 21, 184,
+		141, 199,
+	}
 )
 
 func TestPrivateKey_Sign(t *testing.T) {
@@ -62,6 +68,65 @@ func TestPrivateKey_Sign(t *testing.T) {
 			}
 			if tc.expError == nil && !s.Equals(tc.expSignature) {
 				t.Errorf("signature: %x, expected: %x", s, tc.expSignature)
+			}
+		})
+	}
+}
+
+func TestPublicKey_Verify(t *testing.T) {
+	testcases := map[string]struct {
+		publicKey   PublicKey
+		signature   Signature
+		data        io.Reader
+		expVerified bool
+		expError    error
+	}{
+		"signature is verified": {
+			publicKey:   testPublicKey,
+			signature:   testSignature,
+			data:        strings.NewReader(testData),
+			expVerified: true,
+			expError:    nil,
+		},
+		"invalid public key size": {
+			publicKey:   PublicKey{},
+			signature:   testSignature,
+			data:        strings.NewReader(testData),
+			expVerified: false,
+			expError:    ErrInvalidKeySize,
+		},
+		"invalid public key": {
+			publicKey:   make([]byte, PublicKeySize),
+			signature:   testSignature,
+			data:        strings.NewReader(testData),
+			expVerified: false,
+			expError:    nil,
+		},
+		"invalid signature": {
+			publicKey:   testPublicKey,
+			signature:   make([]byte, SignatureSize),
+			data:        strings.NewReader(testData),
+			expVerified: false,
+			expError:    nil,
+		},
+		"invalid data": {
+			publicKey:   testPublicKey,
+			signature:   testSignature,
+			data:        strings.NewReader("invalid data"),
+			expVerified: false,
+			expError:    nil,
+		},
+	}
+
+	for name, tc := range testcases {
+		t.Run(name, func(t *testing.T) {
+			v, err := tc.publicKey.Verify(tc.signature, tc.data)
+
+			if !errors.Is(err, tc.expError) {
+				t.Errorf("error: %v, expected: %v", err, tc.expError)
+			}
+			if v != tc.expVerified {
+				t.Errorf("verified: %v, expected: %v", v, tc.expVerified)
 			}
 		})
 	}

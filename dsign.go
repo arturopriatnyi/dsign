@@ -65,6 +65,21 @@ func (k PublicKey) Size() int {
 	return len(k)
 }
 
+// Verify verifies that Signature is a valid signature of data by PublicKey.
+func (k PublicKey) Verify(s Signature, data io.Reader) (bool, error) {
+	if k.Size() != PublicKeySize {
+		return false, ErrInvalidKeySize
+	}
+
+	h := sha256.New()
+	if _, err := io.Copy(h, data); err != nil {
+		return false, err
+	}
+
+	// ignoring panic here because we've already checked PublicKey size
+	return ed25519.Verify(ed25519.PublicKey(k), h.Sum(nil), s), nil
+}
+
 // GenerateKeys generates a pair of PrivateKey and PublicKey.
 func GenerateKeys() (PrivateKey, PublicKey, error) {
 	publicKey, privateKey, err := ed25519.GenerateKey(nil)
