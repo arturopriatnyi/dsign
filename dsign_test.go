@@ -134,10 +134,10 @@ func TestPublicKey_Verify(t *testing.T) {
 
 func TestGenerateKeys(t *testing.T) {
 	privateKey, publicKey, err := GenerateKeys()
+
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-
 	if privateKey.Size() != PrivateKeySize {
 		t.Errorf("private key size: %v, expected: %v", privateKey.Size(), PrivateKeySize)
 	}
